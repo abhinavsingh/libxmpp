@@ -4,11 +4,6 @@ libxmpp is a multi-threaded xmpp client/component library using libevent and lib
 
 Build:
 ------
-git clone git://github.com/abhinavsingh/pulsar.git
-cd pulsar/
+git clone git://github.com/abhinavsingh/libxmpp.git
+cd libxmpp/
 make
-./pulsar
-
-Help:
------
-./pulsar -h
