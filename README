@@ -1,0 +1,14 @@
+About:
+------
+libxmpp is a multi-threaded xmpp client/component library using libevent and libexpat
+
+Build:
+------
+git clone git://github.com/abhinavsingh/pulsar.git
+cd pulsar/
+make
+./pulsar
+
+Help:
+-----
+./pulsar -h
