@@ -49,23 +49,10 @@ test_xml_stream() {
 	//xml_stream_free(xml);
 }
 
-void
-test_xmpp_stream() {
-	xmpp_stream *client;
-	client = xmpp_stream_new("root@jaxl.com", "lifeislife");
-	xmpp_stream_connect(client);
-	xmpp_stream_start(client);
-	xmpp_stream_disconnect(client);
-	xmpp_stream_free(client);
-}
-
 int
 main(int argc, char *argv[]) {
 	//test_xmpp_socket();
 	test_xml_stream();
-
-	//xmpp_ctx *ctx;
-	//ctx = xmpp_start_client("root@typed.in", "lifeislife");
 
 	return EXIT_SUCCESS;
 }
