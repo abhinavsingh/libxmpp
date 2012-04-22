@@ -16,7 +16,6 @@
 #include <event2/event.h>
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
-#include <event2/event_compat.h>
 
 #include "xmpp_socket.h"
 
@@ -26,27 +25,27 @@ xmpp_socket_readcb(struct bufferevent *buffer, void *arg) {
 	char buf[1024];
 
 	struct evbuffer *in = bufferevent_get_input(buffer);
-	printf("got read cb\n");
+	//printf("got read cb\n");
 	while((n = evbuffer_remove(in, buf, sizeof(buf))) > 0) {
-		fwrite(buf, 1, n, stdout);
+		//fwrite(buf, 1, n, stdout);
 	}
-	printf("\n");
+	//printf("\n");
 }
 
 static void
 xmpp_socket_writecb(struct bufferevent *buffer, void *arg) {
-	printf("got write cb\n");
+	//printf("got write cb\n");
 }
 
 static void
 xmpp_socket_eventcb(struct bufferevent *buffer, short events, void *arg) {
-	printf("got event cb\n");
+	//printf("got event cb\n");
 
 	if(events & BEV_EVENT_ERROR) {
-		printf("got error\n");
+		//printf("got error\n");
 	}
 	else if(events & BEV_EVENT_EOF) {
-		printf("got eof\n");
+		//printf("got eof\n");
 	}
 }
 
@@ -92,7 +91,7 @@ xmpp_socket_send_data(int pipefd, short event, void *ptr) {
 	ret = read(pipefd, &buf, 1024);
 	//fwrite(&buf, 1, ret, stdout);
 	bufferevent_write(sock->buffer, &buf, ret);
-	printf("\ngot %d bytes from pipe\n", ret);
+	//printf("got %d bytes from pipe\n", ret);
 }
 
 static void *
@@ -109,7 +108,7 @@ xmpp_socket_main(void *arg) {
 	xmpp_socket_setup(sock);
 
 	// loop
-	printf("dispatching socket loop\n");
+	//printf("dispatching socket loop\n");
 	event_base_dispatch(sock->base);
 
 	return NULL;
@@ -137,23 +136,32 @@ xmpp_socket_new(const char *ip, unsigned short port) {
 
 void
 xmpp_socket_free(xmpp_socket *sock) {
+	int i;
+	void *res;
+
+	i = pthread_cancel(sock->t);
+	assert(i == 0);
+
+	i = pthread_join(sock->t, &res);
+	assert(i == 0);
+	assert(res == PTHREAD_CANCELED);
+
+	event_del(sock->ev);
+	event_free(sock->ev);
+	bufferevent_free(sock->buffer);
+	event_base_free(sock->base);
 	free(sock);
 }
 
 void
 xmpp_socket_send(xmpp_socket *sock, const char *data) {
 	int ret = write(sock->stream[1], data, strlen(data));
-	printf("sent %d bytes\n", ret);
+	//printf("sent %d bytes\n", ret);
 	(void)ret;
 }
 
 void
 xmpp_socket_start(xmpp_socket *sock) {
-	printf("threading xmpp socket\n");
+	//printf("threading xmpp socket\n");
 	pthread_create(&sock->t, NULL, xmpp_socket_main, sock);
-}
-
-void
-xmpp_socket_stop(xmpp_socket *sock) {
-
 }

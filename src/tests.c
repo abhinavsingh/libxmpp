@@ -17,7 +17,7 @@ test_xmpp_socket() {
 	xmpp_socket *sock;
 	sock = xmpp_socket_new("127.0.0.1", 5222);
 
-	// start socket (implies connect)
+	// start socket
 	xmpp_socket_start(sock);
 
 	// send some data
@@ -25,11 +25,8 @@ test_xmpp_socket() {
 	char *data = "<stream:stream>";
 	xmpp_socket_send(sock, data);
 
-	sleep(2);
-	// implies disconnect
-	xmpp_socket_stop(sock);
-
 	// free sock
+	sleep(2);
 	xmpp_socket_free(sock);
 }
 
@@ -39,19 +36,19 @@ test_xml_stream() {
 	xml = xml_stream_new();
 
 	xml_stream_start(xml);
-	sleep(3);
+	sleep(1);
 
 	xml_stream_parse(xml, "<stream:stream version='1.0'");
 	xml_stream_parse(xml, ">body</stream:stream");
 	xml_stream_parse_final(xml, ">");
 
 	sleep(2);
-	//xml_stream_free(xml);
+	xml_stream_free(xml);
 }
 
 int
 main(int argc, char *argv[]) {
-	//test_xmpp_socket();
+	test_xmpp_socket();
 	test_xml_stream();
 
 	return EXIT_SUCCESS;

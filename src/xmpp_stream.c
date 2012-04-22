@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 #include <event2/event.h>
-#include <event2/event_compat.h>
 
 #include "xml_stream.h"
 #include "xmpp_socket.h"
@@ -30,8 +29,7 @@ xmpp_stream_main(void *arg) {
 
 	// monitor pipe
 	stream->base = event_base_new();
-	event_set(stream->ev, stream->xml[0], EV_READ | EV_PERSIST, xmpp_stream_process, stream);
-	event_base_set(stream->base, stream->ev);
+	stream->ev = event_new(stream->base, stream->xml[0], EV_READ | EV_PERSIST, xmpp_stream_process, stream);
 	event_add(stream->ev, NULL);
 
 	// loop

@@ -10,7 +10,6 @@
 #include <assert.h>
 
 #include <event2/event.h>
-#include <event2/event_compat.h>
 
 #include "xml_stream.h"
 
@@ -18,7 +17,8 @@ static void XMLCALL
 xml_stream_start_element(void *arg, const XML_Char *name, const XML_Char **attrs) {
 	xml_stream *xml;
 	xml = (xml_stream *)arg;
-	printf("start of %s\n", name);
+	//printf("start of %s\n", name);
+
 	xml->depth++;
 }
 
@@ -26,7 +26,8 @@ static void XMLCALL
 xml_stream_end_element(void *arg, const XML_Char *name) {
 	xml_stream *xml;
 	xml = (xml_stream *)arg;
-	printf("end of %s\n", name);
+	//printf("end of %s\n", name);
+
 	xml->depth--;
 }
 
@@ -45,9 +46,8 @@ xml_stream_parse_data(int pipefd, short event, void *ptr) {
 	int ret;
 
 	ret = read(pipefd, &buf, 1024);
-	//fwrite(&buf, 1, ret, stdout);
 	ret = XML_Parse(xml->parser, buf, ret, 0);
-	printf("\ngot %d bytes from pipe\n", ret);
+	assert(ret != 0);
 }
 
 static void *
@@ -66,7 +66,7 @@ xml_stream_main(void *arg) {
 	XML_SetCharacterDataHandler(xml->parser, xml_stream_data);
 
 	// loop
-	printf("dispatching xml stream loop\n");
+	//printf("dispatching xml stream loop\n");
 	event_base_dispatch(xml->base);
 
 	return NULL;
@@ -93,26 +93,39 @@ xml_stream_new() {
 
 void
 xml_stream_free(xml_stream *xml) {
+	int i;
+	void *res;
+
+	i = pthread_cancel(xml->t);
+	assert(i == 0);
+
+	i = pthread_join(xml->t, &res);
+	assert(i == 0);
+	assert(res == PTHREAD_CANCELED);
+
 	XML_ParserFree(xml->parser);
+	event_del(xml->ev);
+	event_free(xml->ev);
+	event_base_free(xml->base);
 	free(xml);
 }
 
 void
 xml_stream_parse(xml_stream *xml, const char *data) {
 	int ret = write(xml->sock[1], data, strlen(data));
-	printf("sent %d bytes\n", ret);
+	//printf("sent %d bytes\n", ret);
 	(void)ret;
 }
 
 void
 xml_stream_parse_final(xml_stream *xml, const char *data) {
 	int ret = write(xml->sock[1], data, strlen(data));
-	printf("sent %d bytes\n", ret);
+	//printf("sent %d bytes\n", ret);
 	(void)ret;
 }
 
 void
 xml_stream_start(xml_stream *xml) {
-	printf("threading xml stream\n");
+	//printf("threading xml stream\n");
 	pthread_create(&xml->t, NULL, xml_stream_main, xml);
 }
