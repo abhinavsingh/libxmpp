@@ -8,16 +8,40 @@
 #ifndef XMPP_STREAM_H_
 #define XMPP_STREAM_H_
 
-typedef struct _xmpp_socket xmpp_socket;
-typedef struct _xmpp_xml_stream xmpp_xml_stream;
+#include <unistd.h>
+#include <pthread.h>
 
 typedef struct _xmpp_stream xmpp_stream;
 struct _xmpp_stream {
-	const char *jid;
-	const char *password;
+	// event
+	struct event_base *base;
+	struct event *ev;
+	pthread_t t;
 
-	xmpp_socket *socket;
-	xmpp_xml_stream *xml;
+	// communication link for receiving parsed
+	// xml elements from xml stream thread
+	int xml[2];
+
+	const char *jid;
+	const char *pass;
 };
+
+xmpp_stream *
+xmpp_stream_new(const char *jid, const char *pass);
+
+void
+xmpp_stream_free(xmpp_stream *stream);
+
+void
+xmpp_stream_connect(xmpp_stream *stream);
+
+void
+xmpp_stream_disconnect(xmpp_stream *stream);
+
+void
+xmpp_stream_start(xmpp_stream *stream);
+
+void
+xmpp_stream_stop(xmpp_stream *stream);
 
 #endif /* XMPP_STREAM_H_ */

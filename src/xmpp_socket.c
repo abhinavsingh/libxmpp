@@ -5,37 +5,53 @@
  *      Author: abhinavsingh
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <assert.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <event2/event.h>
+#include <event2/buffer.h>
 #include <event2/bufferevent.h>
+#include <event2/event_compat.h>
 
 #include "xmpp_socket.h"
 
-xmpp_socket *
-xmpp_socket_new(const char *ip, unsigned short port) {
-	xmpp_socket *sock;
-	sock = (xmpp_socket *)malloc(sizeof(xmpp_socket));
+static void
+xmpp_socket_readcb(struct bufferevent *buffer, void *arg) {
+	int n;
+	char buf[1024];
 
-	sock->ip = ip;
-	sock->port = port;
+	struct evbuffer *in = bufferevent_get_input(buffer);
+	printf("got read cb\n");
+	while((n = evbuffer_remove(in, buf, sizeof(buf))) > 0) {
+		fwrite(buf, 1, n, stdout);
+	}
+	printf("\n");
+}
 
-	return sock;
+static void
+xmpp_socket_writecb(struct bufferevent *buffer, void *arg) {
+	printf("got write cb\n");
+}
+
+static void
+xmpp_socket_eventcb(struct bufferevent *buffer, short events, void *arg) {
+	printf("got event cb\n");
+
+	if(events & BEV_EVENT_ERROR) {
+		printf("got error\n");
+	}
+	else if(events & BEV_EVENT_EOF) {
+		printf("got eof\n");
+	}
 }
 
 void
-xmpp_socket_free(xmpp_socket *sock) {
-	free(sock);
-}
-
-void
-xmpp_socket_connect(xmpp_socket *sock) {
+xmpp_socket_setup(xmpp_socket *sock) {
 	int ret;
 	struct sockaddr_in addr;
 
@@ -53,8 +69,8 @@ xmpp_socket_connect(xmpp_socket *sock) {
 	ret = evutil_make_socket_nonblocking(sock->fd);
 	assert(ret == 0);
 
-	sock->base = event_base_new();
 	sock->buffer = bufferevent_socket_new(sock->base, sock->fd, BEV_OPT_CLOSE_ON_FREE);
+	bufferevent_setcb(sock->buffer, xmpp_socket_readcb, xmpp_socket_writecb, xmpp_socket_eventcb, sock);
 	bufferevent_enable(sock->buffer, EV_READ|EV_WRITE);
 }
 
@@ -65,12 +81,79 @@ xmpp_socket_disconnect(xmpp_socket *sock) {
 	close(sock->fd);
 }
 
-void
-xmpp_socket_send(xmpp_socket *sock, char *data) {
+static void
+xmpp_socket_send_data(int pipefd, short event, void *ptr) {
+	xmpp_socket *sock;
+	sock = (xmpp_socket *)ptr;
 
+	char buf[1024];
+	int ret;
+
+	ret = read(pipefd, &buf, 1024);
+	//fwrite(&buf, 1, ret, stdout);
+	bufferevent_write(sock->buffer, &buf, ret);
+	printf("\ngot %d bytes from pipe\n", ret);
+}
+
+static void *
+xmpp_socket_main(void *arg) {
+	xmpp_socket *sock;
+	sock = (xmpp_socket *)arg;
+
+	// monitor pipe
+	sock->base = event_base_new();
+	sock->ev = event_new(sock->base, sock->stream[0], EV_READ | EV_PERSIST, xmpp_socket_send_data, sock);
+	event_add(sock->ev, NULL);
+
+	// setup socket
+	xmpp_socket_setup(sock);
+
+	// loop
+	printf("dispatching socket loop\n");
+	event_base_dispatch(sock->base);
+
+	return NULL;
+}
+
+//
+// API Methods
+//
+
+xmpp_socket *
+xmpp_socket_new(const char *ip, unsigned short port) {
+	int ret;
+
+	xmpp_socket *sock;
+	sock = (xmpp_socket *)malloc(sizeof(xmpp_socket));
+
+	sock->ip = ip;
+	sock->port = port;
+
+	ret = pipe(sock->stream);
+	(void)ret;
+
+	return sock;
 }
 
 void
-xmpp_socket_recv(xmpp_socket *sock) {
+xmpp_socket_free(xmpp_socket *sock) {
+	free(sock);
+}
+
+void
+xmpp_socket_send(xmpp_socket *sock, const char *data) {
+	int ret = write(sock->stream[1], data, strlen(data));
+	printf("sent %d bytes\n", ret);
+	(void)ret;
+}
+
+void
+xmpp_socket_start(xmpp_socket *sock) {
+	printf("threading xmpp socket\n");
+	pthread_create(&sock->t, NULL, xmpp_socket_main, sock);
+}
+
+void
+xmpp_socket_stop(xmpp_socket *sock) {
 
 }

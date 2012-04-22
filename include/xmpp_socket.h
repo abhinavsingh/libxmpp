@@ -8,14 +8,28 @@
 #ifndef XMPP_SOCKET_H_
 #define XMPP_SOCKET_H_
 
+#include <unistd.h>
+#include <pthread.h>
+
 typedef struct _xmpp_socket xmpp_socket;
 struct _xmpp_socket {
+	// event
+	struct event_base *base;
+	struct event *ev;
+	struct bufferevent *buffer;
+	pthread_t t;
+
+	// communication link for receiving
+	// data to be send over socket from
+	// underlying xmpp_stream thread
+	int stream[2];
+
+	// connected socket fd
+	int fd;
+
+	// socket conf
 	const char *ip;
 	unsigned short port;
-
-	int fd;
-	struct event_base *base;
-	struct bufferevent *buffer;
 };
 
 xmpp_socket *
@@ -25,15 +39,12 @@ void
 xmpp_socket_free(xmpp_socket *sock);
 
 void
-xmpp_socket_connect(xmpp_socket *sock);
+xmpp_socket_start(xmpp_socket *sock);
 
 void
-xmpp_socket_disconnect(xmpp_socket *sock);
+xmpp_socket_send(xmpp_socket *sock, const char *data);
 
 void
-xmpp_socket_send(xmpp_socket *sock, char *data);
-
-void
-xmpp_socket_recv(xmpp_socket *sock);
+xmpp_socket_stop(xmpp_socket *sock);
 
 #endif /* XMPP_SOCKET_H_ */

@@ -9,9 +9,20 @@
 #define XML_STREAM_H_
 
 #include <expat.h>
+#include <unistd.h>
+#include <pthread.h>
 
 typedef struct _xml_stream xml_stream;
 struct _xml_stream {
+	// event
+	struct event_base *base;
+	struct event *ev;
+	pthread_t t;
+
+	// communication link for receiving raw
+	// socket data from xmpp_socket thread
+	int sock[2];
+
 	int depth;
 	XML_Parser parser;
 };
@@ -20,12 +31,15 @@ xml_stream *
 xml_stream_new();
 
 void
+xml_stream_start(xml_stream *xml);
+
+void
 xml_stream_free(xml_stream *xml);
 
 void
-xml_stream_parse(xml_stream *xml, const char *s);
+xml_stream_parse(xml_stream *xml, const char *data);
 
 void
-xml_stream_parse_final(xml_stream *xml, const char *s);
+xml_stream_parse_final(xml_stream *xml, const char *data);
 
 #endif /* XML_STREAM_H_ */

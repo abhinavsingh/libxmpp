@@ -1,9 +1,31 @@
 About:
 ------
-libxmpp is a multi-threaded xmpp client/component library using libevent and libexpat
+libxmpp is a multi-threaded xmpp client/component library
 
 Build:
 ------
 git clone git://github.com/abhinavsingh/libxmpp.git
 cd libxmpp/
 make
+
+Dependencies:
+-------------
+-levent -lexpat -pthread
+
+How it works:
+--------------
+- a new xmpp stream is initialized by calling: xmpp_ctx * xmpp_start_new_stream(const char *jid, const char *pass);
+- for xmpp clients jid = "user@domain.tld", pass = "user account password"
+- for xmpp components jid = "component.domain.tld", pass = "component secret"
+- xmpp_init_new_stream(...) in turn create 3 threads each by calling:
+	- xmpp_stream * xmpp_stream_new()
+	- xmpp_socket * xmpp_socket_new()
+	- xml_stream * xml_stream_new()
+- xmpp_socket do necessary SRV lookup and establish tcp socket to destination jabber host:port
+- xmpp_socket will pipe all received xml data to underlying xml_stream thread
+- xml_stream thread is an expat streaming parser
+- xml_stream will pipe all parsed xml events to underlying xmpp_stream thread
+- xmpp_stream thread is modeled as a finite-state-machine and implements various stages of an xmpp client and components
+- finally, xmpp_stream thread will pipe matching events to the user thread
+
+Provisions for sending signals and commands to a running xmpp stream via an interactive shell console

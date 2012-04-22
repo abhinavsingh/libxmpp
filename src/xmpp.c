@@ -5,44 +5,24 @@
  *      Author: abhinavsingh
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 
-#include "xml_stream.h"
-#include "xmpp_socket.h"
+#include "xmpp.h"
 
-void
-test_xmpp_socket() {
-	// create new xmpp socket
-	xmpp_socket *sock;
-	sock = xmpp_socket_new("127.0.0.1", 5222);
+xmpp_ctx *
+xmpp_start_client(const char *jid, const char *pass) {
+	xmpp_ctx *ctx;
+	ctx = (xmpp_ctx *)malloc(sizeof(xmpp_ctx));
 
-	// connect it to host:port
-	xmpp_socket_connect(sock);
+	// initialize structs
+	ctx->stream = xmpp_stream_new(jid, pass);
+	ctx->xml = xml_stream_new();
+	ctx->sock = xmpp_socket_new("127.0.0.1", 5222);
 
-	// disconnect socket
-	xmpp_socket_disconnect(sock);
+	// dispatch them in threads
+	xml_stream_start(ctx->xml);
+	xmpp_stream_start(ctx->stream);
+	xmpp_socket_start(ctx->sock);
 
-	// free sock
-	xmpp_socket_free(sock);
-}
-
-void
-test_xml_stream() {
-	xml_stream *xml;
-	xml = xml_stream_new();
-
-	xml_stream_parse(xml, "<stream:stream version='1.0'");
-	xml_stream_parse(xml, ">body</stream:stream");
-	xml_stream_parse_final(xml, ">");
-
-	xml_stream_free(xml);
-}
-
-int
-main(int argc, char *argv[]) {
-	//test_xmpp_socket();
-	test_xml_stream();
-
-	return EXIT_SUCCESS;
+	return ctx;
 }
