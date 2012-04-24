@@ -39,8 +39,10 @@ test_xml_stream() {
 	sleep(1);
 
 	xml_stream_parse(xml, "<stream:stream version='1.0'");
-	xml_stream_parse(xml, ">body</stream:stream");
-	xml_stream_parse_final(xml, ">");
+	xml_stream_parse(xml, "><message to='1@a.in' from='");
+	xml_stream_parse(xml, "2@b.in'><body>hello</body>");
+	xml_stream_parse(xml, "<thread>1234</thread>");
+	xml_stream_parse(xml, "</message></stream:stream>");
 
 	sleep(2);
 	xml_stream_free(xml);
@@ -48,7 +50,7 @@ test_xml_stream() {
 
 int
 main(int argc, char *argv[]) {
-	test_xmpp_socket();
+	//test_xmpp_socket();
 	test_xml_stream();
 
 	return EXIT_SUCCESS;

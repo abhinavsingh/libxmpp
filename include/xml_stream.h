@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
+typedef struct _xml_element xml_element;
+
 typedef struct _xml_stream xml_stream;
 struct _xml_stream {
 	// event

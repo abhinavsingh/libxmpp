@@ -11,13 +11,22 @@
 
 #include <event2/event.h>
 
+#include "xml_element.h"
 #include "xml_stream.h"
 
 static void XMLCALL
 xml_stream_start_element(void *arg, const XML_Char *name, const XML_Char **attrs) {
 	xml_stream *xml;
 	xml = (xml_stream *)arg;
-	//printf("start of %s\n", name);
+	printf("start of %s at depth %d\n", name, xml->depth);
+
+	if(xml->depth == 0) {
+
+	}
+	else {
+		xml_element *xmlel;
+		xmlel = xml_element_new(name, attrs);
+	}
 
 	xml->depth++;
 }
@@ -26,7 +35,14 @@ static void XMLCALL
 xml_stream_end_element(void *arg, const XML_Char *name) {
 	xml_stream *xml;
 	xml = (xml_stream *)arg;
-	//printf("end of %s\n", name);
+	printf("end of %s at depth %d\n", name, xml->depth - 1);
+
+	if(xml->depth == 1) {
+
+	}
+	else {
+
+	}
 
 	xml->depth--;
 }
@@ -85,6 +101,7 @@ xml_stream_new() {
 
 	xml->depth = 0;
 	xml->parser = XML_ParserCreate(NULL);
+
 	ret = pipe(xml->sock);
 	(void)ret;
 
