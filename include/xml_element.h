@@ -9,8 +9,8 @@
 #define XML_ELEMENT_H_
 
 #include <expat.h>
+#include "common.h"
 
-typedef struct _xml_element xml_element;
 struct _xml_element {
 	const XML_Char *name;
 	const XML_Char **attrs;

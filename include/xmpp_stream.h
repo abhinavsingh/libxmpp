@@ -10,8 +10,8 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include "common.h"
 
-typedef struct _xmpp_stream xmpp_stream;
 struct _xmpp_stream {
 	// event
 	struct event_base *base;

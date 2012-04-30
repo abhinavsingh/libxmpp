@@ -11,8 +11,8 @@
 #include "xml_stream.h"
 #include "xmpp_socket.h"
 #include "xmpp_stream.h"
+#include "common.h"
 
-typedef struct _xmpp_ctx xmpp_ctx;
 struct _xmpp_ctx {
 	xmpp_stream *stream;
 	xmpp_socket *sock;
